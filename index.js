@@ -2,6 +2,9 @@ import DiscordJS, {Intents} from 'discord.js';
 import dotenv from 'dotenv';
 import  axios from 'axios';
 import qs from 'qs';
+import fs from 'fs';
+import arrayToTxtFile from 'array-to-txt-file';
+
 dotenv.config();
 
 const client = new DiscordJS.Client({
@@ -14,6 +17,9 @@ const client = new DiscordJS.Client({
 let channelArray = new Array();
 
 client.on('ready', () => {
+
+    var text = fs.readFileSync("./issues.txt", 'utf-8');
+    channelArray = text.split('\r\n')
 
     console.log("bot is running"); 
     const guild = client.guilds.cache.get("962266275067854868"); //manually input the ID of the server
@@ -53,6 +59,8 @@ client.on('ready', () => {
                         channel.send({content: str2.concat(issues.activeErrors[i].description)});
                         let time = Date(issues.activeErrors[i].timestamp*1000);
                         channel.send({content: str3.concat(time)});
+                        let format = '\r\n';
+                        fs.appendFileSync('issues.txt', format.concat(issues.activeErrors[i].id));
 
                     })
                     .catch(console.error);
@@ -91,15 +99,22 @@ client.on('messageCreate', (message) => {
         axios(config)
         .then(function (response) {
             channelArray = channelArray.filter(function(value){ 
-                return value != channelName ;
+                return value.toLowerCase() != channelName ;
             });
+            arrayToTxtFile(channelArray, './issues.txt', err => {
+                if(err) {
+                  console.error(err)
+                  return
+                }
+                console.log('Successfully wrote to txt file')
+            })
             console.log(JSON.stringify(response.data));
         })
         .catch(function (error) {
             console.log(error);
         });
 
-        message.channel.setParent("962728934221439036"); //manually input the ID of the 'Resolved issues' category
+        message.channel.setParent("963791742191165520"); //manually input the ID of the 'Resolved issues' category
     
     }
     
